@@ -1,10 +1,39 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
-import React from "react";
-import { FlatList, ScrollView, TouchableOpacity, View } from "react-native";
+import { Redirect } from "expo-router";
+import { onAuthStateChanged, User } from "firebase/auth";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, ScrollView, TouchableOpacity, View } from "react-native";
+import { auth } from "../../config/firebase";
 
 export default function HomeScreen() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Jika masih loading, tampilkan loading
+  if (loading) {
+    return (
+      <ThemedView className="flex-1 justify-center items-center bg-gray-50">
+        <ActivityIndicator size="large" color="#007AFF" />
+        <ThemedText className="mt-4 text-gray-600">Loading...</ThemedText>
+      </ThemedView>
+    );
+  }
+
+  // Jika user belum login, redirect ke login
+  if (!user) {
+    return <Redirect href="/(tabs)/login" />;
+  }
+
   // Dummy data for popular routes
   const popularRoutes = [
     {
@@ -106,14 +135,7 @@ export default function HomeScreen() {
         {/* Popular Routes Section */}
         <View className="mb-10">
           <ThemedText className="text-xl font-bold mb-4 text-gray-800">Rute Populer</ThemedText>
-          <FlatList 
-            data={popularRoutes} 
-            renderItem={renderRouteCard} 
-            keyExtractor={(item) => item.id} 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            contentContainerStyle={{ paddingLeft: 0 }} 
-          />
+          <FlatList data={popularRoutes} renderItem={renderRouteCard} keyExtractor={(item) => item.id} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 0 }} />
         </View>
       </ScrollView>
     </ThemedView>

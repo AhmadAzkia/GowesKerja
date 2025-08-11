@@ -1,126 +1,198 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
-import React from "react";
-import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, ScrollView, TouchableOpacity, View } from "react-native";
+
+interface ProfileData {
+  name: string;
+  email: string;
+  joinDate: string;
+  totalTrips: number;
+  totalDistance: string;
+  co2Saved: string;
+  points: number;
+}
 
 export default function ProfileScreen() {
-  // User data
-  const userData = {
-    name: "Ahmad Azkia",
-    email: "ahmad.azkia@email.com",
-    joinDate: "Bergabung sejak Januari 2025",
-    totalTrips: 42,
-    totalDistance: "120.5 km",
-    co2Saved: "30.2 kg",
-    points: 1500,
+  const [loading, setLoading] = useState(true);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+
+  useEffect(() => {
+    loadProfileData();
+  }, []);
+
+  const loadProfileData = async () => {
+    try {
+      const storedData = await AsyncStorage.getItem("userData");
+      if (storedData) {
+        setProfileData(JSON.parse(storedData));
+      } else {
+        // Default profile data
+        const defaultData: ProfileData = {
+          name: "Ahmad Azkia",
+          email: "ahmad.azkia@example.com",
+          joinDate: "10 Agustus 2025",
+          totalTrips: 15,
+          totalDistance: "45.3 km",
+          co2Saved: "12.5 kg",
+          points: 1250,
+        };
+        setProfileData(defaultData);
+        await AsyncStorage.setItem("userData", JSON.stringify(defaultData));
+      }
+    } catch (error) {
+      console.error("Error loading profile data:", error);
+      // Fallback data
+      setProfileData({
+        name: "User",
+        email: "user@example.com",
+        joinDate: "Hari ini",
+        totalTrips: 0,
+        totalDistance: "0 km",
+        co2Saved: "0 kg",
+        points: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAccountSettings = () => {
-    Alert.alert("Pengaturan Akun", "Fitur pengaturan akun akan segera tersedia");
-  };
-
-  const handleLogout = () => {
-    Alert.alert("Logout", "Apakah Anda yakin ingin keluar dari aplikasi?", [
-      {
-        text: "Batal",
-        style: "cancel",
-      },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: () => {
-          // Implement logout logic here
-          Alert.alert("Logout", "Anda telah berhasil logout");
+  const handleLogout = async () => {
+    try {
+      Alert.alert("Konfirmasi Logout", "Apakah Anda yakin ingin keluar?", [
+        {
+          text: "Batal",
+          style: "cancel",
         },
-      },
-    ]);
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            await AsyncStorage.removeItem("userSession");
+            router.replace("/(tabs)/login");
+          },
+        },
+      ]);
+    } catch (error) {
+      console.error("Logout error:", error);
+      Alert.alert("Error", "Gagal logout");
+    }
   };
+
+  if (loading) {
+    return (
+      <ThemedView className="flex-1 justify-center items-center bg-gray-50">
+        <ActivityIndicator size="large" color="#007AFF" />
+        <ThemedText className="mt-4 text-gray-600">Memuat profil...</ThemedText>
+      </ThemedView>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <ThemedView className="flex-1 justify-center items-center bg-gray-50">
+        <FontAwesome name="user-times" size={64} color="#999" />
+        <ThemedText className="mt-4 text-gray-600 text-center">Tidak ada data profil yang tersedia</ThemedText>
+        <TouchableOpacity className="mt-4 bg-blue-500 px-6 py-3 rounded-lg" onPress={() => router.push("/(tabs)/login")}>
+          <ThemedText className="text-white font-semibold">Login</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView className="flex-1 bg-gray-50">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20, paddingTop: 60 }} showsVerticalScrollIndicator={false}>
-        {/* Header with Avatar and User Info */}
-        <View className="items-center mb-10">
-          <View className="mb-5">
-            <View className="w-24 h-24 bg-blue-50 rounded-full justify-center items-center border-4 border-blue-500">
-              <FontAwesome name="user" size={40} color="#007AFF" />
-            </View>
+      <ScrollView className="flex-1 px-6 pt-12">
+        {/* Header Profile */}
+        <View className="items-center mb-8">
+          <View className="w-24 h-24 bg-blue-500 rounded-full justify-center items-center mb-4">
+            <FontAwesome name="user" size={40} color="white" />
           </View>
-          <ThemedText className="text-2xl font-bold text-gray-800 mb-2">{userData.name}</ThemedText>
-          <ThemedText className="text-base text-gray-600 mb-1">{userData.email}</ThemedText>
-          <ThemedText className="text-sm text-gray-400">{userData.joinDate}</ThemedText>
+          <ThemedText className="text-2xl font-bold text-gray-800">{profileData.name}</ThemedText>
+          <ThemedText className="text-base text-gray-600 mt-1">{profileData.email}</ThemedText>
+          <ThemedText className="text-sm text-gray-500 mt-1">Bergabung {profileData.joinDate}</ThemedText>
         </View>
 
-        {/* Statistics Summary */}
+        {/* Statistics Cards */}
         <View className="mb-8">
-          <ThemedText className="text-xl font-bold text-gray-800 mb-6 text-center">Ringkasan Statistik</ThemedText>
+          <ThemedText className="text-lg font-bold text-gray-800 mb-4">Statistik Saya</ThemedText>
 
           <View className="flex-row justify-between mb-4">
-            {/* Total Perjalanan */}
-            <View className="bg-white rounded-2xl p-4 items-center flex-1 mx-1 shadow-sm">
-              <View className="w-12 h-12 bg-blue-50 rounded-full justify-center items-center mb-3">
-                <FontAwesome name="bicycle" size={24} color="#007AFF" />
-              </View>
-              <ThemedText className="text-xs text-gray-600 text-center mb-2">Total Perjalanan</ThemedText>
-              <ThemedText className="text-lg font-bold text-gray-800 text-center">{userData.totalTrips}</ThemedText>
+            <View className="bg-white rounded-2xl p-4 flex-1 mr-2 shadow-sm">
+              <FontAwesome name="bicycle" size={24} color="#007AFF" />
+              <ThemedText className="text-2xl font-bold text-gray-800 mt-2">{profileData.totalTrips}</ThemedText>
+              <ThemedText className="text-sm text-gray-600">Total Perjalanan</ThemedText>
             </View>
 
-            {/* Total Jarak */}
-            <View className="bg-white rounded-2xl p-4 items-center flex-1 mx-1 shadow-sm">
-              <View className="w-12 h-12 bg-red-50 rounded-full justify-center items-center mb-3">
-                <FontAwesome name="road" size={24} color="#FF6B6B" />
-              </View>
-              <ThemedText className="text-xs text-gray-600 text-center mb-2">Total Jarak</ThemedText>
-              <ThemedText className="text-lg font-bold text-gray-800 text-center">{userData.totalDistance}</ThemedText>
+            <View className="bg-white rounded-2xl p-4 flex-1 ml-2 shadow-sm">
+              <FontAwesome name="road" size={24} color="#34C759" />
+              <ThemedText className="text-2xl font-bold text-gray-800 mt-2">{profileData.totalDistance}</ThemedText>
+              <ThemedText className="text-sm text-gray-600">Jarak Tempuh</ThemedText>
             </View>
           </View>
 
           <View className="flex-row justify-between">
-            {/* CO2 Terhemat */}
-            <View className="bg-white rounded-2xl p-4 items-center flex-1 mx-1 shadow-sm">
-              <View className="w-12 h-12 bg-green-50 rounded-full justify-center items-center mb-3">
-                <FontAwesome name="leaf" size={24} color="#4ECDC4" />
-              </View>
-              <ThemedText className="text-xs text-gray-600 text-center mb-2">CO2 Terhemat</ThemedText>
-              <ThemedText className="text-lg font-bold text-gray-800 text-center">{userData.co2Saved}</ThemedText>
+            <View className="bg-white rounded-2xl p-4 flex-1 mr-2 shadow-sm">
+              <FontAwesome name="leaf" size={24} color="#32D74B" />
+              <ThemedText className="text-2xl font-bold text-gray-800 mt-2">{profileData.co2Saved}</ThemedText>
+              <ThemedText className="text-sm text-gray-600">CO₂ Tersimpan</ThemedText>
             </View>
 
-            {/* Total Poin */}
-            <View className="bg-white rounded-2xl p-4 items-center flex-1 mx-1 shadow-sm">
-              <View className="w-12 h-12 bg-yellow-50 rounded-full justify-center items-center mb-3">
-                <FontAwesome name="star" size={24} color="#FFE66D" />
-              </View>
-              <ThemedText className="text-xs text-gray-600 text-center mb-2">Total Poin</ThemedText>
-              <ThemedText className="text-lg font-bold text-gray-800 text-center">{userData.points}</ThemedText>
+            <View className="bg-white rounded-2xl p-4 flex-1 ml-2 shadow-sm">
+              <FontAwesome name="star" size={24} color="#FFD60A" />
+              <ThemedText className="text-2xl font-bold text-gray-800 mt-2">{profileData.points}</ThemedText>
+              <ThemedText className="text-sm text-gray-600">Total Poin</ThemedText>
             </View>
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View className="gap-3">
-          <TouchableOpacity className="bg-white rounded-2xl p-4 flex-row items-center shadow-sm" onPress={handleAccountSettings}>
-            <View className="w-10 h-10 bg-blue-50 rounded-full justify-center items-center mr-4">
-              <FontAwesome name="cog" size={20} color="#007AFF" />
+        {/* Menu Options */}
+        <View className="mb-8">
+          <ThemedText className="text-lg font-bold text-gray-800 mb-4">Pengaturan</ThemedText>
+
+          <TouchableOpacity className="bg-white rounded-2xl p-4 flex-row items-center justify-between mb-3 shadow-sm">
+            <View className="flex-row items-center">
+              <FontAwesome name="edit" size={20} color="#007AFF" />
+              <ThemedText className="text-base text-gray-800 ml-3">Edit Profil</ThemedText>
             </View>
-            <View className="flex-1">
-              <ThemedText className="text-base font-medium text-gray-800">Pengaturan Akun</ThemedText>
-              <ThemedText className="text-sm text-gray-500 mt-1">Kelola profil dan preferensi</ThemedText>
-            </View>
-            <FontAwesome name="chevron-right" size={16} color="#CCCCCC" />
+            <FontAwesome name="chevron-right" size={16} color="#999" />
           </TouchableOpacity>
 
-          <TouchableOpacity className="bg-white rounded-2xl p-4 flex-row items-center shadow-sm border border-red-200" onPress={handleLogout}>
-            <View className="w-10 h-10 bg-red-50 rounded-full justify-center items-center mr-4">
-              <FontAwesome name="sign-out" size={20} color="#FF3B30" />
+          <TouchableOpacity className="bg-white rounded-2xl p-4 flex-row items-center justify-between mb-3 shadow-sm">
+            <View className="flex-row items-center">
+              <FontAwesome name="bell" size={20} color="#007AFF" />
+              <ThemedText className="text-base text-gray-800 ml-3">Notifikasi</ThemedText>
             </View>
-            <View className="flex-1">
-              <ThemedText className="text-base font-medium text-red-500">Logout</ThemedText>
-              <ThemedText className="text-sm text-gray-500 mt-1">Keluar dari aplikasi</ThemedText>
+            <FontAwesome name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity className="bg-white rounded-2xl p-4 flex-row items-center justify-between mb-3 shadow-sm">
+            <View className="flex-row items-center">
+              <FontAwesome name="question-circle" size={20} color="#007AFF" />
+              <ThemedText className="text-base text-gray-800 ml-3">Bantuan</ThemedText>
             </View>
-            <FontAwesome name="chevron-right" size={16} color="#CCCCCC" />
+            <FontAwesome name="chevron-right" size={16} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity className="bg-white rounded-2xl p-4 flex-row items-center justify-between mb-3 shadow-sm">
+            <View className="flex-row items-center">
+              <FontAwesome name="info-circle" size={20} color="#007AFF" />
+              <ThemedText className="text-base text-gray-800 ml-3">Tentang</ThemedText>
+            </View>
+            <FontAwesome name="chevron-right" size={16} color="#999" />
           </TouchableOpacity>
         </View>
+
+        {/* Logout Button */}
+        <TouchableOpacity className="bg-red-500 rounded-2xl p-4 items-center mb-8" onPress={handleLogout}>
+          <View className="flex-row items-center">
+            <FontAwesome name="sign-out" size={20} color="white" />
+            <ThemedText className="text-white text-base font-semibold ml-2">Logout</ThemedText>
+          </View>
+        </TouchableOpacity>
       </ScrollView>
     </ThemedView>
   );

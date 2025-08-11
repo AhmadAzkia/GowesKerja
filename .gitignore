@@ -10,6 +10,8 @@ web-build/
 expo-env.d.ts
 
 # Native
+android/
+ios/
 .kotlin/
 *.orig.*
 *.jks
@@ -32,8 +34,19 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
 
 app-example
+
+# Firebase Configuration (SENSITIVE)
+google-services.json
+config/firebase.ts
+config/.env.firebase
+
+# Development files
+*.log
+*.tmp
+*.cache
