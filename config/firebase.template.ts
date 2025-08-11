@@ -30,7 +30,7 @@ let auth: Auth;
 try {
   // For Expo/React Native, use browserLocalPersistence for persistent login
   auth = initializeAuth(app, {
-    persistence: browserLocalPersistence
+    persistence: browserLocalPersistence,
   });
   console.log("Firebase Auth initialized with local persistence");
 } catch {
