@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "317952888285",
+    "project_id": "goweskerja-ab08d",
+    "storage_bucket": "goweskerja-ab08d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317952888285:android:9526a561491fe80ec3fa34",
+        "android_client_info": {
+          "package_name": "com.ahmadazkia.goweskerja"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPBgozhizaXjbgAB2GJNqBmTgOwHFlByM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

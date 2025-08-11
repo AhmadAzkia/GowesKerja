@@ -41,11 +41,6 @@ yarn-error.*
 
 app-example
 
-# Firebase Configuration (SENSITIVE)
-google-services.json
-config/firebase.ts
-config/.env.firebase
-
 # Development files
 *.log
 *.tmp
