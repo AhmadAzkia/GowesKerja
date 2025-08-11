@@ -1,8 +1,8 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
-import { Redirect } from "expo-router";
 import { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { Redirect } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, ScrollView, TouchableOpacity, View } from "react-native";
 import { auth } from "../../config/firebase";
