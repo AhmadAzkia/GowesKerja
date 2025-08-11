@@ -2,7 +2,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, TextInput, TouchableOpacity, View } from "react-native";
 import { auth } from "../../config/firebase";
@@ -28,7 +27,7 @@ export default function LoginScreen() {
 
     try {
       // Firebase Authentication login
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await auth().signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
       console.log("User signed in!", user.email);
@@ -79,7 +78,7 @@ export default function LoginScreen() {
     }
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      await auth().sendPasswordResetEmail(email);
       Alert.alert("Email Terkirim", "Link reset password telah dikirim ke email Anda. Silakan periksa inbox dan folder spam.");
     } catch (error: any) {
       console.error("Password reset error:", error);

@@ -2,17 +2,17 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, ScrollView, TouchableOpacity, View } from "react-native";
 import { auth } from "../../config/firebase";
 
 export default function HomeScreen() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
       setUser(currentUser);
       setLoading(false);
     });

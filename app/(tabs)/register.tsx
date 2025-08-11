@@ -2,8 +2,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { ref, set } from "firebase/database";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, TextInput, TouchableOpacity, View } from "react-native";
 import { auth, database } from "../../config/firebase";
@@ -42,11 +40,11 @@ export default function RegisterScreen() {
 
     try {
       // Firebase Authentication registration
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
       // Update user profile with display name
-      await updateProfile(user, {
+      await user.updateProfile({
         displayName: name,
       });
 
@@ -67,7 +65,7 @@ export default function RegisterScreen() {
       };
 
       // Save to Firebase Realtime Database
-      await set(ref(database, `users/${user.uid}`), userData);
+      await database().ref(`users/${user.uid}`).set(userData);
 
       console.log("User registered successfully!", user.email);
       Alert.alert("Sukses", "Pendaftaran berhasil! Silakan login dengan akun Anda.", [

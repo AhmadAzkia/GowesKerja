@@ -7,16 +7,16 @@ import { HapticTab } from "@/components/HapticTab";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { auth } from "../../config/firebase";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
       setUser(currentUser);
       setLoading(false);
     });
