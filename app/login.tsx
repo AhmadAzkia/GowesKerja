@@ -31,10 +31,13 @@ export default function LoginScreen() {
       const user = userCredential.user;
 
       console.log("User signed in!", user.email);
+
       // Reset form
       setEmail("");
       setPassword("");
-      // Navigation will be handled automatically by _layout.tsx
+
+      // Let _layout.tsx handle navigation automatically when auth state changes
+      console.log("Waiting for auth state to propagate...");
     } catch (error: any) {
       console.error("Login error:", error);
       Alert.alert("Error", "Login gagal, periksa email atau password Anda.");

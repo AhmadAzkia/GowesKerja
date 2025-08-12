@@ -4,7 +4,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // import { FirebaseAuthTypes } from "@react-native-firebase/auth";
-import { Redirect } from "expo-router";
+import { Redirect, router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 // import { auth } from "../../config/firebase";
@@ -28,6 +28,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+      console.log("Index auth state changed:", currentUser ? `User: ${currentUser.email}` : "No user");
       setUser(currentUser);
       setLoading(false);
     });
@@ -147,8 +148,11 @@ export default function HomeScreen() {
 
   // Jika user belum login, redirect ke login
   if (!user) {
+    console.log("Index: No user found, redirecting to login");
     return <Redirect href="/login" />;
   }
+
+  console.log("Index: User found, rendering home screen for:", user.email);
 
   const renderRouteCard = ({ item }: { item: RouteData }) => (
     <TouchableOpacity style={styles.routeCard}>
@@ -205,7 +209,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Start Journey Button */}
-        <TouchableOpacity style={styles.startButton}>
+        <TouchableOpacity style={styles.startButton} onPress={() => router.push("/start-journey" as any)}>
           <ThemedText style={styles.startButtonText}>Mulai Perjalanan</ThemedText>
         </TouchableOpacity>
 

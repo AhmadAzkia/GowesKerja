@@ -9,6 +9,7 @@ export interface TripData {
   distance: string;
   duration: string;
   points: number;
+  co2Saved?: string;
   userId?: string;
 }
 
@@ -401,6 +402,23 @@ export class MockDataService {
       return true;
     } catch (error) {
       console.error("Error clearing user data:", error);
+      return false;
+    }
+  }
+
+  // Add trip history for journey tracking
+  static async addTripHistory(userId: string, tripData: Omit<TripData, "id" | "userId" | "time">): Promise<boolean> {
+    try {
+      const newTrip: TripData = {
+        ...tripData,
+        id: Date.now().toString(),
+        time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+        userId: userId,
+      };
+
+      return await this.addTrip(newTrip);
+    } catch (error) {
+      console.error("Error adding trip history:", error);
       return false;
     }
   }

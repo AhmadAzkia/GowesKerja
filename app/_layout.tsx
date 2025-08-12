@@ -22,6 +22,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+      console.log("_layout auth state changed:", currentUser ? `User: ${currentUser.email}` : "No user");
       setUser(currentUser);
       setLoading(false);
     });
@@ -31,16 +32,30 @@ export default function RootLayout() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === "(tabs)";
+    const inTabsGroup = segments[0] === "(tabs)";
+    const currentSegment = segments[0] as string;
+    const inJourneyGroup = currentSegment === "start-journey" || currentSegment === "journey-tracking";
+    const onAuthPages = currentSegment === "login" || currentSegment === "register";
+    console.log("Routing check:", {
+      user: user ? user.email : "none",
+      segments,
+      inTabsGroup,
+      inJourneyGroup,
+      onAuthPages,
+      loading,
+    });
 
-    if (!user && inAuthGroup) {
+    if (!user && (inTabsGroup || inJourneyGroup)) {
       // User is not logged in but trying to access protected routes
+      console.log("Redirecting to login - user not authenticated");
       router.replace("/login");
-    } else if (user && !inAuthGroup) {
-      // User is logged in but on auth pages
+    } else if (user && onAuthPages) {
+      // User is logged in but still on login/register pages
+      console.log("Redirecting to tabs - user authenticated but on auth pages");
       router.replace("/(tabs)");
     }
-  }, [user, segments, loading, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, segments, loading]);
 
   if (!loaded || loading) {
     return null;
@@ -51,6 +66,8 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="register" options={{ headerShown: false }} />
+        <Stack.Screen name="start-journey" options={{ headerShown: false }} />
+        <Stack.Screen name="journey-tracking" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>

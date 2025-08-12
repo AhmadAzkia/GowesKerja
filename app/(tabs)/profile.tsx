@@ -157,6 +157,65 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const showAboutDialog = () => {
+    Alert.alert(
+      "🚴‍♂️ Tentang GowesKerja",
+      "Dibuat oleh Ahmad Azkia, mahasiswa Teknik Informatika Universitas Komputer Indonesia.\n\n" +
+        "Aplikasi ini dibuat untuk memenuhi tugas mata kuliah Pemrograman Android.\n\n" +
+        "🌟 Fitur Utama:\n" +
+        "• Tracking perjalanan sepeda dengan GPS\n" +
+        "• Sistem poin dan reward\n" +
+        "• Kalkulasi CO2 yang dihemat\n" +
+        "• Leaderboard kompetitif\n" +
+        "• Riwayat perjalanan\n\n" +
+        "💚 Mari bersama-sama berkontribusi untuk lingkungan yang lebih bersih dengan bersepeda!\n\n" +
+        "Versi 1.0.0 - 2025",
+      [{ text: "OK", style: "default" }]
+    );
+  };
+
+  const showHelpDialog = () => {
+    Alert.alert(
+      "🆘 Bantuan & FAQ",
+      "📍 Cara Memulai Perjalanan:\n" +
+        "1. Tap 'Mulai Perjalanan' di beranda\n" +
+        "2. Pilih atau cari tujuan Anda\n" +
+        "3. Tap 'Mulai Tracking' untuk memulai\n" +
+        "4. Bersepeda menuju tujuan Anda\n" +
+        "5. Tracking otomatis berhenti saat tiba\n\n" +
+        "⭐ Sistem Poin:\n" +
+        "• 1 poin = 100 meter perjalanan\n" +
+        "• Poin bertambah otomatis saat tracking\n" +
+        "• Lihat ranking di tab Leaderboard\n\n" +
+        "🚴‍♂️ Tips Bersepeda Aman:\n" +
+        "• Selalu gunakan helm\n" +
+        "• Perhatikan kondisi jalan\n" +
+        "• Jaga jarak aman dengan kendaraan\n" +
+        "• Gunakan jalur sepeda jika tersedia\n\n" +
+        "❓ Masalah Umum:\n" +
+        "• GPS tidak akurat? Pastikan izin lokasi aktif\n" +
+        "• Tracking berhenti? Periksa koneksi internet\n" +
+        "• Poin tidak bertambah? Restart tracking\n\n" +
+        "📧 Butuh bantuan lebih lanjut?\n" +
+        "Kontak: ahmadazkia5@gmail.com",
+      [{ text: "OK", style: "default" }]
+    );
+  };
+
+  const showComingSoonDialog = (featureName: string) => {
+    Alert.alert(
+      "🚧 Coming Soon",
+      `Fitur ${featureName} sedang dalam pengembangan dan akan tersedia di versi mendatang!\n\n` +
+        "🌟 Yang akan datang:\n" +
+        "• Edit profil lengkap dengan foto\n" +
+        "• Notifikasi achievement dan reminder\n" +
+        "• Pengaturan preferensi personal\n" +
+        "• Dan fitur menarik lainnya!\n\n" +
+        "📱 Stay tuned untuk update selanjutnya!",
+      [{ text: "OK", style: "default" }]
+    );
+  };
+
   if (loading) {
     return (
       <ThemedView style={styles.loadingContainer}>
@@ -228,7 +287,7 @@ export default function ProfileScreen() {
         <View style={styles.menuSection}>
           <ThemedText style={styles.sectionTitle}>Pengaturan</ThemedText>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => showComingSoonDialog("Edit Profil")}>
             <View style={styles.menuItemContent}>
               <FontAwesome name="edit" size={20} color="#007AFF" />
               <ThemedText style={styles.menuItemText}>Edit Profil</ThemedText>
@@ -236,7 +295,7 @@ export default function ProfileScreen() {
             <FontAwesome name="chevron-right" size={16} color="#999" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => showComingSoonDialog("Notifikasi")}>
             <View style={styles.menuItemContent}>
               <FontAwesome name="bell" size={20} color="#007AFF" />
               <ThemedText style={styles.menuItemText}>Notifikasi</ThemedText>
@@ -244,7 +303,7 @@ export default function ProfileScreen() {
             <FontAwesome name="chevron-right" size={16} color="#999" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={showHelpDialog}>
             <View style={styles.menuItemContent}>
               <FontAwesome name="question-circle" size={20} color="#007AFF" />
               <ThemedText style={styles.menuItemText}>Bantuan</ThemedText>
@@ -252,7 +311,7 @@ export default function ProfileScreen() {
             <FontAwesome name="chevron-right" size={16} color="#999" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={showAboutDialog}>
             <View style={styles.menuItemContent}>
               <FontAwesome name="info-circle" size={20} color="#007AFF" />
               <ThemedText style={styles.menuItemText}>Tentang</ThemedText>
