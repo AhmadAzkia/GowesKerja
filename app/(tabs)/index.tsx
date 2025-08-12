@@ -1,3 +1,4 @@
+// import MapViewComponent from "@/components/MapView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
@@ -208,12 +209,16 @@ export default function HomeScreen() {
           <ThemedText style={styles.startButtonText}>Mulai Perjalanan</ThemedText>
         </TouchableOpacity>
 
-        {/* Map Placeholder */}
-        <View style={styles.mapContainer}>
-          <View style={styles.mapPlaceholder}>
-            <FontAwesome name="map" size={40} color="#007AFF" />
-            <ThemedText style={styles.mapText}>Peta akan dimuat di sini</ThemedText>
-            <ThemedText style={styles.mapSubtext}>Jakarta, Indonesia</ThemedText>
+        {/* Map Section */}
+        <View style={styles.mapSection}>
+          <ThemedText style={styles.sectionTitle}>Peta Bandung</ThemedText>
+          <View style={styles.mapContainer}>
+            <View style={styles.mapPlaceholder}>
+              <FontAwesome name="map" size={48} color="#3b82f6" />
+              <ThemedText style={styles.mapPlaceholderTitle}>Google Maps - Bandung</ThemedText>
+              <ThemedText style={styles.mapPlaceholderSubtitle}>Maps sedang dikonfigurasi</ThemedText>
+              <ThemedText style={styles.mapPlaceholderNote}>Lokasi: Gedung Sate, Dago, Trans Studio</ThemedText>
+            </View>
           </View>
         </View>
 
@@ -309,30 +314,51 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
+  mapSection: {
+    marginBottom: 24,
+  },
   mapContainer: {
     width: "100%",
-    height: 288,
-    borderRadius: 12,
-    marginBottom: 20,
-    backgroundColor: "#f3f4f6",
-    borderWidth: 1,
-    borderColor: "#d1d5db",
+    height: 250,
+    borderRadius: 16,
+    marginBottom: 24,
+    backgroundColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: "hidden",
+  },
+  map: {
+    flex: 1,
+    height: 250,
   },
   mapPlaceholder: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
-  mapText: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginTop: 12,
-    color: "#6b7280",
+  mapPlaceholderTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginTop: 16,
+    textAlign: "center",
   },
-  mapSubtext: {
+  mapPlaceholderSubtitle: {
     fontSize: 14,
+    color: "#6b7280",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  mapPlaceholderNote: {
+    fontSize: 12,
     color: "#9ca3af",
-    marginTop: 4,
+    marginTop: 8,
+    textAlign: "center",
+    fontStyle: "italic",
   },
   routesSection: {
     marginBottom: 40,

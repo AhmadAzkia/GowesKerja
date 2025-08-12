@@ -122,4 +122,11 @@ postcss.config.js.disabled
 
 # Development config files (keep template versions)
 config/firebase.mock.ts
+config/maps.config.ts
 google-services.json
+app.json
+
+# Debug files
+android.view.Choreographer$CallbackRecord
+*.stacktrace
+*.crash
