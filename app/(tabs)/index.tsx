@@ -1,15 +1,29 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
-import { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+// import { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { Redirect } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, ScrollView, TouchableOpacity, View } from "react-native";
-import { auth } from "../../config/firebase";
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+// import { auth } from "../../config/firebase";
+import { auth } from "../../config/firebase.mock";
+import { MockDataService, RouteData } from "../../services/mockDataService";
+
+interface UserData {
+  name: string;
+  email: string;
+  totalTrips: number;
+  totalDistance: string;
+  co2Saved: string;
+  points: number;
+}
 
 export default function HomeScreen() {
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [popularRoutes, setPopularRoutes] = useState<RouteData[]>([]);
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged((currentUser) => {
@@ -19,125 +33,378 @@ export default function HomeScreen() {
     return unsubscribe;
   }, []);
 
+  const updateUserStats = useCallback(
+    async (currentUserData: UserData) => {
+      try {
+        // Use MockDataService to calculate stats
+        const stats = await MockDataService.calculateUserStats(user?.uid);
+
+        const updatedData: UserData = {
+          ...currentUserData,
+          totalTrips: stats.totalTrips,
+          totalDistance: `${stats.totalDistance.toFixed(1)} km`,
+          co2Saved: `${stats.co2Saved.toFixed(1)} kg`,
+          points: stats.points,
+        };
+
+        setUserData(updatedData);
+        await AsyncStorage.setItem("userData", JSON.stringify(updatedData));
+      } catch (error) {
+        console.error("Error updating user stats:", error);
+        setUserData(currentUserData);
+      }
+    },
+    [user]
+  );
+
+  const loadUserData = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const storedData = await AsyncStorage.getItem("userData");
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        // Update statistik berdasarkan trip history
+        await updateUserStats(parsedData);
+      } else {
+        // Default data jika belum ada
+        const defaultData: UserData = {
+          name: user?.displayName || "User",
+          email: user?.email || "user@example.com",
+          totalTrips: 0,
+          totalDistance: "0 km",
+          co2Saved: "0 kg",
+          points: 0,
+        };
+        setUserData(defaultData);
+        await AsyncStorage.setItem("userData", JSON.stringify(defaultData));
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      // Fallback data
+      setUserData({
+        name: user?.displayName || "User",
+        email: user?.email || "user@example.com",
+        totalTrips: 0,
+        totalDistance: "0 km",
+        co2Saved: "0 kg",
+        points: 0,
+      });
+    }
+  }, [user, updateUserStats]);
+
+  const loadPopularRoutes = useCallback(async () => {
+    try {
+      // Pass user ID to get popular routes for this user only
+      const routes = await MockDataService.getPopularRoutes(user?.uid);
+      setPopularRoutes(routes);
+    } catch (error) {
+      console.error("Error loading popular routes:", error);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadUserData();
+      loadPopularRoutes();
+    }
+  }, [user, loadUserData, loadPopularRoutes]);
+
+  // Initialize mock data on component mount (tanpa sample data untuk user baru)
+  useEffect(() => {
+    MockDataService.initializeData(false); // false = tidak tambahkan sample data
+    // Debug: lihat apa yang ada di storage
+    MockDataService.debugStorage();
+    // Don't load popular routes here - wait for user to login
+  }, []);
+
+  // Initialize new user when user login for first time
+  useEffect(() => {
+    if (user) {
+      MockDataService.initializeNewUser(user.uid);
+    }
+  }, [user]);
+
+  // Helper untuk greeting berdasarkan waktu
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Selamat Pagi";
+    if (hour < 15) return "Selamat Siang";
+    if (hour < 18) return "Selamat Sore";
+    return "Selamat Malam";
+  };
+
   // Jika masih loading, tampilkan loading
   if (loading) {
     return (
-      <ThemedView className="flex-1 justify-center items-center bg-gray-50">
+      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f9fafb" }}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <ThemedText className="mt-4 text-gray-600">Loading...</ThemedText>
+        <ThemedText style={{ marginTop: 16, color: "#6b7280" }}>Loading...</ThemedText>
       </ThemedView>
     );
   }
 
   // Jika user belum login, redirect ke login
   if (!user) {
-    return <Redirect href="/(tabs)/login" />;
+    return <Redirect href="/login" />;
   }
 
-  // Dummy data for popular routes
-  const popularRoutes = [
-    {
-      id: "1",
-      name: "Monas - Bundaran HI",
-      distance: "3.2 km",
-      elevation: "15 m",
-      icon: "building",
-    },
-    {
-      id: "2",
-      name: "Kemang - Senopati",
-      distance: "2.8 km",
-      elevation: "8 m",
-      icon: "road",
-    },
-    {
-      id: "3",
-      name: "Sudirman - Thamrin",
-      distance: "4.1 km",
-      elevation: "12 m",
-      icon: "location-arrow",
-    },
-    {
-      id: "4",
-      name: "Pantai Ancol - Kota Tua",
-      distance: "5.5 km",
-      elevation: "5 m",
-      icon: "ship",
-    },
-  ];
-
-  const renderRouteCard = ({ item }: { item: any }) => (
-    <TouchableOpacity className="bg-white rounded-xl p-4 mr-4 w-44 shadow-sm">
-      <View className="w-12 h-12 bg-blue-50 rounded-full justify-center items-center mb-3">
-        <FontAwesome name={item.icon} size={24} color="#007AFF" />
+  const renderRouteCard = ({ item }: { item: RouteData }) => (
+    <TouchableOpacity style={styles.routeCard}>
+      <View style={styles.routeIconContainer}>
+        <FontAwesome name={item.icon as any} size={24} color="#007AFF" />
       </View>
-      <ThemedText className="text-base font-semibold text-gray-800 mb-3 leading-5">{item.name}</ThemedText>
-      <View className="flex-col gap-2">
-        <View className="flex-row items-center gap-2">
+      <ThemedText style={styles.routeName}>{item.name}</ThemedText>
+      <View style={styles.routeDetails}>
+        <View style={styles.routeDetailRow}>
           <FontAwesome name="road" size={12} color="#666666" />
-          <ThemedText className="text-sm text-gray-600">{item.distance}</ThemedText>
+          <ThemedText style={styles.routeDetailText}>{item.distance}</ThemedText>
         </View>
-        <View className="flex-row items-center gap-2">
+        <View style={styles.routeDetailRow}>
           <FontAwesome name="line-chart" size={12} color="#666666" />
-          <ThemedText className="text-sm text-gray-600">{item.elevation}</ThemedText>
+          <ThemedText style={styles.routeDetailText}>{item.elevation}</ThemedText>
         </View>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <ThemedView className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingTop: 60, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+    <ThemedView style={styles.container}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="flex-row justify-between items-center mb-8">
-          <ThemedText className="text-lg font-semibold">Selamat Pagi, User!</ThemedText>
+        <View style={styles.header}>
+          <ThemedText style={styles.headerText}>
+            {getGreeting()}, {userData?.name || user?.displayName || "User"}!
+          </ThemedText>
           <FontAwesome name="bell" size={24} color="#007AFF" />
         </View>
 
         {/* Cards Section */}
-        <View className="flex-row justify-between mb-8">
+        <View style={styles.cardsContainer}>
           {/* Card 1: Total Jarak */}
-          <View className="flex-1 bg-white rounded-xl p-4 mx-1 items-center shadow-sm">
-            <FontAwesome name="map-marker" size={24} color="#FF6B6B" className="mb-2" />
-            <ThemedText className="text-xs text-gray-600 mb-1 text-center">Total Jarak</ThemedText>
-            <ThemedText className="text-base font-bold text-gray-800 text-center">120.5 km</ThemedText>
+          <View style={styles.card}>
+            <FontAwesome name="map-marker" size={24} color="#FF6B6B" style={styles.cardIcon} />
+            <ThemedText style={styles.cardLabel}>Total Jarak</ThemedText>
+            <ThemedText style={styles.cardValue}>{userData?.totalDistance || "0 km"}</ThemedText>
           </View>
 
           {/* Card 2: CO2 Terhemat */}
-          <View className="flex-1 bg-white rounded-xl p-4 mx-1 items-center shadow-sm">
-            <FontAwesome name="leaf" size={24} color="#4ECDC4" className="mb-2" />
-            <ThemedText className="text-xs text-gray-600 mb-1 text-center">CO2 Terhemat</ThemedText>
-            <ThemedText className="text-base font-bold text-gray-800 text-center">30.2 kg</ThemedText>
+          <View style={styles.card}>
+            <FontAwesome name="leaf" size={24} color="#4ECDC4" style={styles.cardIcon} />
+            <ThemedText style={styles.cardLabel}>CO2 Terhemat</ThemedText>
+            <ThemedText style={styles.cardValue}>{userData?.co2Saved || "0 kg"}</ThemedText>
           </View>
 
           {/* Card 3: Poin Anda */}
-          <View className="flex-1 bg-white rounded-xl p-4 mx-1 items-center shadow-sm">
-            <FontAwesome name="star" size={24} color="#FFE66D" className="mb-2" />
-            <ThemedText className="text-xs text-gray-600 mb-1 text-center">Poin Anda</ThemedText>
-            <ThemedText className="text-base font-bold text-gray-800 text-center">1,500</ThemedText>
+          <View style={styles.card}>
+            <FontAwesome name="star" size={24} color="#FFE66D" style={styles.cardIcon} />
+            <ThemedText style={styles.cardLabel}>Poin Anda</ThemedText>
+            <ThemedText style={styles.cardValue}>{userData?.points?.toLocaleString() || "0"}</ThemedText>
           </View>
         </View>
 
         {/* Start Journey Button */}
-        <TouchableOpacity className="bg-blue-500 py-4 px-8 rounded-xl items-center mb-5 shadow-sm">
-          <ThemedText className="text-white text-lg font-semibold">Mulai Perjalanan</ThemedText>
+        <TouchableOpacity style={styles.startButton}>
+          <ThemedText style={styles.startButtonText}>Mulai Perjalanan</ThemedText>
         </TouchableOpacity>
 
         {/* Map Placeholder */}
-        <View className="w-full h-72 rounded-xl mb-5 bg-gray-100 border border-gray-300">
-          <View className="flex-1 justify-center items-center">
+        <View style={styles.mapContainer}>
+          <View style={styles.mapPlaceholder}>
             <FontAwesome name="map" size={40} color="#007AFF" />
-            <ThemedText className="text-base font-medium mt-3 text-gray-600">Peta akan dimuat di sini</ThemedText>
-            <ThemedText className="text-sm text-gray-500 mt-1">Jakarta, Indonesia</ThemedText>
+            <ThemedText style={styles.mapText}>Peta akan dimuat di sini</ThemedText>
+            <ThemedText style={styles.mapSubtext}>Jakarta, Indonesia</ThemedText>
           </View>
         </View>
 
         {/* Popular Routes Section */}
-        <View className="mb-10">
-          <ThemedText className="text-xl font-bold mb-4 text-gray-800">Rute Populer</ThemedText>
-          <FlatList data={popularRoutes} renderItem={renderRouteCard} keyExtractor={(item) => item.id} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 0 }} />
+        <View style={styles.routesSection}>
+          <ThemedText style={styles.sectionTitle}>Rute Populer</ThemedText>
+          {popularRoutes.length > 0 ? (
+            <FlatList data={popularRoutes} renderItem={renderRouteCard} keyExtractor={(item) => item.id} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.routesList} />
+          ) : (
+            <View style={styles.emptyRoutesContainer}>
+              <FontAwesome name="map-o" size={48} color="#d1d5db" />
+              <ThemedText style={styles.emptyRoutesText}>Belum ada rute populer</ThemedText>
+              <ThemedText style={styles.emptyRoutesSubtext}>Mulai perjalanan pertama Anda untuk melihat rute populer</ThemedText>
+            </View>
+          )}
         </View>
       </ScrollView>
     </ThemedView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingTop: 60,
+    paddingBottom: 100,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  cardsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 32,
+  },
+  card: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 4,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  cardIcon: {
+    marginBottom: 8,
+  },
+  cardLabel: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  cardValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1f2937",
+    textAlign: "center",
+  },
+  startButton: {
+    backgroundColor: "#3b82f6",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  startButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  mapContainer: {
+    width: "100%",
+    height: 288,
+    borderRadius: 12,
+    marginBottom: 20,
+    backgroundColor: "#f3f4f6",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+  },
+  mapPlaceholder: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mapText: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginTop: 12,
+    color: "#6b7280",
+  },
+  mapSubtext: {
+    fontSize: 14,
+    color: "#9ca3af",
+    marginTop: 4,
+  },
+  routesSection: {
+    marginBottom: 40,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 16,
+    color: "#1f2937",
+  },
+  routesList: {
+    paddingLeft: 0,
+  },
+  routeCard: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 16,
+    marginRight: 16,
+    width: 176,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  routeIconContainer: {
+    width: 48,
+    height: 48,
+    backgroundColor: "#eff6ff",
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  routeName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  routeDetails: {
+    flexDirection: "column",
+    gap: 8,
+  },
+  routeDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  routeDetailText: {
+    fontSize: 14,
+    color: "#6b7280",
+  },
+  emptyRoutesContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyRoutesText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#6b7280",
+    marginTop: 16,
+    textAlign: "center",
+  },
+  emptyRoutesSubtext: {
+    fontSize: 14,
+    color: "#9ca3af",
+    marginTop: 8,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+});

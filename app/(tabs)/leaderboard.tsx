@@ -1,90 +1,30 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, ScrollView, TouchableOpacity, View } from "react-native";
-
-interface LeaderboardUser {
-  id: string;
-  name: string;
-  points: number;
-  totalDistance: string;
-  position: number;
-}
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { LeaderboardUser, MockDataService } from "../../services/mockDataService";
 
 export default function LeaderboardScreen() {
   const [selectedFilter, setSelectedFilter] = useState("Minggu Ini");
   const [loading, setLoading] = useState(true);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([]);
 
-  useEffect(() => {
-    loadLeaderboardData();
-  }, []);
-
-  const loadLeaderboardData = async () => {
+  const loadLeaderboardData = useCallback(async () => {
     try {
-      const storedData = await AsyncStorage.getItem("leaderboardData");
-      if (storedData) {
-        setLeaderboardData(JSON.parse(storedData));
-      } else {
-        // Default leaderboard data
-        const defaultData: LeaderboardUser[] = [
-          {
-            id: "1",
-            name: "Ahmad Rizki",
-            points: 3280,
-            totalDistance: "125.5 km",
-            position: 1,
-          },
-          {
-            id: "2",
-            name: "Sarah Chen",
-            points: 2450,
-            totalDistance: "98.2 km",
-            position: 2,
-          },
-          {
-            id: "3",
-            name: "Budi Santoso",
-            points: 2180,
-            totalDistance: "87.3 km",
-            position: 3,
-          },
-          {
-            id: "4",
-            name: "Dewi Lestari",
-            points: 1950,
-            totalDistance: "85.3 km",
-            position: 4,
-          },
-          {
-            id: "5",
-            name: "Andi Wijaya",
-            points: 1820,
-            totalDistance: "78.9 km",
-            position: 5,
-          },
-        ];
-        setLeaderboardData(defaultData);
-        await AsyncStorage.setItem("leaderboardData", JSON.stringify(defaultData));
-      }
+      setLoading(true);
+      const data = await MockDataService.getLeaderboard();
+      setLeaderboardData(data);
     } catch (error) {
       console.error("Error loading leaderboard data:", error);
-      // Fallback data
-      setLeaderboardData([
-        {
-          id: "1",
-          name: "Ahmad Rizki",
-          points: 3280,
-          totalDistance: "125.5 km",
-          position: 1,
-        },
-      ]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadLeaderboardData();
+  }, [loadLeaderboardData]);
 
   // Ambil top 3 pengguna
   const topThree = leaderboardData.slice(0, 3);
@@ -95,8 +35,8 @@ export default function LeaderboardScreen() {
   const filters = ["Minggu Ini", "Bulan Ini", "Semua"];
 
   const renderFilterButton = (filter: string) => (
-    <TouchableOpacity key={filter} className={`py-2 px-4 rounded-full mr-3 ${selectedFilter === filter ? "bg-blue-500" : "bg-white border border-gray-300"}`} onPress={() => setSelectedFilter(filter)}>
-      <ThemedText className={`font-medium ${selectedFilter === filter ? "text-white" : "text-gray-600"}`}>{filter}</ThemedText>
+    <TouchableOpacity key={filter} style={[styles.filterButton, selectedFilter === filter ? styles.filterButtonActive : styles.filterButtonInactive]} onPress={() => setSelectedFilter(filter)}>
+      <ThemedText style={[styles.filterButtonText, selectedFilter === filter ? styles.filterButtonTextActive : styles.filterButtonTextInactive]}>{filter}</ThemedText>
     </TouchableOpacity>
   );
 
@@ -106,17 +46,17 @@ export default function LeaderboardScreen() {
     const containerHeight = isWinner ? 160 : 150;
 
     return (
-      <View key={user.id} className="flex-1 items-center mx-2" style={{ height: containerHeight }}>
-        <View className="w-6 h-6 bg-blue-500 rounded-full items-center justify-center mb-2">
-          <ThemedText className="text-white text-xs font-bold">{user.position}</ThemedText>
+      <View key={user.id} style={[styles.podiumItem, { height: containerHeight }]}>
+        <View style={styles.positionBadge}>
+          <ThemedText style={styles.positionText}>{user.position}</ThemedText>
         </View>
-        <View className="rounded-full items-center justify-center mb-3 bg-blue-50" style={{ width: avatarSize, height: avatarSize }}>
+        <View style={[styles.avatarContainer, { width: avatarSize, height: avatarSize }]}>
           <FontAwesome name="user-circle" size={avatarSize * 0.8} color={isWinner ? "#FFD700" : "#007AFF"} />
         </View>
-        <ThemedText className={`text-center font-semibold mb-1 ${isWinner ? "text-base text-yellow-600" : "text-sm text-gray-800"}`} numberOfLines={2} ellipsizeMode="tail">
+        <ThemedText style={[styles.podiumName, isWinner ? styles.podiumNameWinner : styles.podiumNameRegular]} numberOfLines={2} ellipsizeMode="tail">
           {user.name}
         </ThemedText>
-        <ThemedText className={`text-center ${isWinner ? "text-sm font-bold text-yellow-600" : "text-xs text-gray-600"}`} numberOfLines={1}>
+        <ThemedText style={[styles.podiumPoints, isWinner ? styles.podiumPointsWinner : styles.podiumPointsRegular]} numberOfLines={1}>
           {user.points.toLocaleString()} pts
         </ThemedText>
       </View>
@@ -124,23 +64,23 @@ export default function LeaderboardScreen() {
   };
 
   const renderRankingItem = ({ item }: { item: LeaderboardUser }) => (
-    <View className="flex-row items-center justify-between py-4 px-5 bg-white rounded-2xl">
-      <View className="flex-row items-center flex-1">
-        <View className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center mr-3">
-          <ThemedText className="text-sm font-semibold text-gray-700">{item.position}</ThemedText>
+    <View style={styles.rankingCard}>
+      <View style={styles.rankingLeft}>
+        <View style={styles.rankingPosition}>
+          <ThemedText style={styles.rankingPositionText}>{item.position}</ThemedText>
         </View>
-        <View className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center mr-3">
+        <View style={styles.rankingAvatar}>
           <FontAwesome name="user-circle" size={20} color="#007AFF" />
         </View>
-        <View className="flex-1">
-          <ThemedText className="font-semibold text-gray-800 mb-1" numberOfLines={1}>
+        <View style={styles.rankingInfo}>
+          <ThemedText style={styles.rankingName} numberOfLines={1}>
             {item.name}
           </ThemedText>
-          <ThemedText className="text-xs text-gray-500">{item.totalDistance} total jarak</ThemedText>
+          <ThemedText style={styles.rankingDistance}>{item.totalDistance} total jarak</ThemedText>
         </View>
       </View>
-      <View className="items-end">
-        <ThemedText className="text-sm font-semibold text-blue-600 mb-1">{item.points.toLocaleString()} pts</ThemedText>
+      <View style={styles.rankingRight}>
+        <ThemedText style={styles.rankingPoints}>{item.points.toLocaleString()} pts</ThemedText>
         <FontAwesome name="chevron-right" size={16} color="#CCCCCC" />
       </View>
     </View>
@@ -149,9 +89,9 @@ export default function LeaderboardScreen() {
   // Loading state
   if (loading) {
     return (
-      <ThemedView className="flex-1 bg-gray-50 justify-center items-center">
+      <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <ThemedText className="text-base text-gray-600 mt-4">Memuat leaderboard...</ThemedText>
+        <ThemedText style={styles.loadingText}>Memuat leaderboard...</ThemedText>
       </ThemedView>
     );
   }
@@ -159,49 +99,259 @@ export default function LeaderboardScreen() {
   // Empty state
   if (leaderboardData.length === 0) {
     return (
-      <ThemedView className="flex-1 bg-gray-50 justify-center items-center px-6">
+      <ThemedView style={styles.emptyContainer}>
         <FontAwesome name="trophy" size={48} color="#CCCCCC" />
-        <ThemedText className="text-lg font-medium text-gray-800 mt-4 text-center">Belum ada data leaderboard</ThemedText>
-        <ThemedText className="text-sm text-gray-600 mt-2 text-center">Jadilah yang pertama dengan mengumpulkan poin!</ThemedText>
+        <ThemedText style={styles.emptyTitle}>Belum ada data leaderboard</ThemedText>
+        <ThemedText style={styles.emptySubtitle}>Jadilah yang pertama dengan mengumpulkan poin!</ThemedText>
       </ThemedView>
     );
   }
 
   return (
-    <ThemedView className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingTop: 60 }}>
+    <ThemedView style={styles.container}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
-        <ThemedText type="title" className="mb-6">
+        <ThemedText type="title" style={styles.title}>
           Leaderboard
         </ThemedText>
 
         {/* Filter Buttons */}
-        <View className="flex-row mb-8">{filters.map(renderFilterButton)}</View>
+        <View style={styles.filterContainer}>{filters.map(renderFilterButton)}</View>
 
         {/* Podium Section */}
         {topThree.length > 0 && (
-          <View className="mb-8">
-            <ThemedText className="text-lg font-bold text-gray-800 mb-4 text-center">Top 3 Peringkat</ThemedText>
-            <View className="flex-row justify-center items-end bg-white rounded-2xl p-6 shadow-sm">{topThree.map(renderPodiumItem)}</View>
+          <View style={styles.podiumSection}>
+            <ThemedText style={styles.sectionTitle}>Top 3 Peringkat</ThemedText>
+            <View style={styles.podiumContainer}>{topThree.map(renderPodiumItem)}</View>
           </View>
         )}
 
         {/* Rankings List Section */}
         {remainingRankings.length > 0 && (
           <View>
-            <ThemedText className="text-lg font-bold text-gray-800 mb-4">Peringkat Lainnya</ThemedText>
-            <FlatList data={remainingRankings} renderItem={renderRankingItem} keyExtractor={(item) => item.id} scrollEnabled={false} showsVerticalScrollIndicator={false} ItemSeparatorComponent={() => <View className="h-3" />} />
+            <ThemedText style={styles.sectionTitle}>Peringkat Lainnya</ThemedText>
+            <FlatList data={remainingRankings} renderItem={renderRankingItem} keyExtractor={(item) => item.id} scrollEnabled={false} showsVerticalScrollIndicator={false} ItemSeparatorComponent={() => <View style={styles.separator} />} />
           </View>
         )}
 
         {/* Show all users if less than 4 */}
         {leaderboardData.length > 0 && leaderboardData.length <= 3 && (
           <View>
-            <ThemedText className="text-lg font-bold text-gray-800 mb-4">Semua Pengguna</ThemedText>
-            <FlatList data={leaderboardData} renderItem={renderRankingItem} keyExtractor={(item) => item.id} scrollEnabled={false} showsVerticalScrollIndicator={false} ItemSeparatorComponent={() => <View className="h-3" />} />
+            <ThemedText style={styles.sectionTitle}>Semua Pengguna</ThemedText>
+            <FlatList data={leaderboardData} renderItem={renderRankingItem} keyExtractor={(item) => item.id} scrollEnabled={false} showsVerticalScrollIndicator={false} ItemSeparatorComponent={() => <View style={styles.separator} />} />
           </View>
         )}
       </ScrollView>
     </ThemedView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#6b7280",
+    marginTop: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "500",
+    color: "#1f2937",
+    marginTop: 16,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingTop: 60,
+  },
+  title: {
+    marginBottom: 24,
+  },
+  filterContainer: {
+    flexDirection: "row",
+    marginBottom: 32,
+  },
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  filterButtonActive: {
+    backgroundColor: "#3b82f6",
+  },
+  filterButtonInactive: {
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+  },
+  filterButtonText: {
+    fontWeight: "500",
+  },
+  filterButtonTextActive: {
+    color: "white",
+  },
+  filterButtonTextInactive: {
+    color: "#6b7280",
+  },
+  podiumSection: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1f2937",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  podiumContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "flex-end",
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  podiumItem: {
+    flex: 1,
+    alignItems: "center",
+    marginHorizontal: 8,
+  },
+  positionBadge: {
+    width: 24,
+    height: 24,
+    backgroundColor: "#3b82f6",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  positionText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  avatarContainer: {
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+    backgroundColor: "#eff6ff",
+  },
+  podiumName: {
+    textAlign: "center",
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  podiumNameWinner: {
+    fontSize: 16,
+    color: "#d97706",
+  },
+  podiumNameRegular: {
+    fontSize: 14,
+    color: "#1f2937",
+  },
+  podiumPoints: {
+    textAlign: "center",
+  },
+  podiumPointsWinner: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#d97706",
+  },
+  podiumPointsRegular: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+  rankingCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: "white",
+    borderRadius: 16,
+  },
+  rankingLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  rankingPosition: {
+    width: 32,
+    height: 32,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  rankingPositionText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  rankingAvatar: {
+    width: 40,
+    height: 40,
+    backgroundColor: "#eff6ff",
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  rankingInfo: {
+    flex: 1,
+  },
+  rankingName: {
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 4,
+  },
+  rankingDistance: {
+    fontSize: 12,
+    color: "#9ca3af",
+  },
+  rankingRight: {
+    alignItems: "flex-end",
+  },
+  rankingPoints: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#3b82f6",
+    marginBottom: 4,
+  },
+  separator: {
+    height: 12,
+  },
+});
