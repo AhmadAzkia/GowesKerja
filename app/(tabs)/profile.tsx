@@ -3,9 +3,10 @@ import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { auth } from "../../config/firebase.mock";
+import { auth } from "../../config/firebase";
 import { MockDataService } from "../../services/mockDataService";
 
 interface ProfileData {
@@ -24,7 +25,7 @@ export default function ProfileScreen() {
   const [user, setUser] = useState<any | null>(null);
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser: User | null) => {
       setUser(currentUser);
     });
     return unsubscribe;
@@ -120,7 +121,7 @@ export default function ProfileScreen() {
         onPress: async () => {
           try {
             // Sign out from Firebase auth (mock)
-            await auth().signOut();
+            await signOut(auth);
             // Remove local user data
             await AsyncStorage.removeItem("userData");
             // Navigate to login - the _layout.tsx will handle automatic routing

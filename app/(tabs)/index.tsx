@@ -9,7 +9,9 @@ import { Redirect, router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 // import { auth } from "../../config/firebase";
-import { auth } from "../../config/firebase.mock";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, firestore } from "../../config/firebase";
 import { MockDataService, RouteData } from "../../services/mockDataService";
 
 interface UserData {
@@ -28,7 +30,7 @@ export default function HomeScreen() {
   const [popularRoutes, setPopularRoutes] = useState<RouteData[]>([]);
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser: User | null) => {
       console.log("Index auth state changed:", currentUser ? `User: ${currentUser.email}` : "No user");
       setUser(currentUser);
       setLoading(false);
@@ -67,26 +69,56 @@ export default function HomeScreen() {
       const storedData = await AsyncStorage.getItem("userData");
       if (storedData) {
         const parsedData = JSON.parse(storedData);
+        // Update nama jika ada displayName dari Firebase Auth yang lebih baru
+        if (user?.displayName && parsedData.name !== user.displayName) {
+          parsedData.name = user.displayName;
+        }
         // Update statistik berdasarkan trip history
         await updateUserStats(parsedData);
       } else {
-        // Default data jika belum ada
-        const defaultData: UserData = {
-          name: user?.displayName || "User",
-          email: user?.email || "user@example.com",
-          totalTrips: 0,
-          totalDistance: "0 km",
-          co2Saved: "0 kg",
-          points: 0,
-        };
-        setUserData(defaultData);
-        await AsyncStorage.setItem("userData", JSON.stringify(defaultData));
+        // Coba ambil data dari Firestore sebagai fallback
+        try {
+          const userDocRef = doc(firestore, "users", user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const firestoreData = userDocSnap.data();
+            const userData: UserData = {
+              name: firestoreData.name || user?.displayName || user?.email?.split("@")[0] || "User",
+              email: user?.email || "user@example.com",
+              totalTrips: firestoreData.totalTrips || 0,
+              totalDistance: firestoreData.totalDistance || "0 km",
+              co2Saved: firestoreData.co2Saved || "0 kg",
+              points: firestoreData.points || 0,
+            };
+            setUserData(userData);
+            await AsyncStorage.setItem("userData", JSON.stringify(userData));
+          } else {
+            throw new Error("No Firestore data found");
+          }
+        } catch (firestoreError) {
+          console.log("No Firestore data, using defaults:", firestoreError);
+          // Default data jika tidak ada di Firestore
+          const userName = user?.displayName || user?.email?.split("@")[0] || "User";
+
+          const defaultData: UserData = {
+            name: userName,
+            email: user?.email || "user@example.com",
+            totalTrips: 0,
+            totalDistance: "0 km",
+            co2Saved: "0 kg",
+            points: 0,
+          };
+          setUserData(defaultData);
+          await AsyncStorage.setItem("userData", JSON.stringify(defaultData));
+        }
       }
     } catch (error) {
       console.error("Error loading user data:", error);
-      // Fallback data
+      // Fallback data dengan nama yang lebih baik
+      const fallbackName = user?.displayName || user?.email?.split("@")[0] || "User";
       setUserData({
-        name: user?.displayName || "User",
+        name: fallbackName,
         email: user?.email || "user@example.com",
         totalTrips: 0,
         totalDistance: "0 km",
@@ -153,13 +185,7 @@ export default function HomeScreen() {
 
   // Subtitle motivasi yang berubah-ubah
   const getMotivationalSubtitle = () => {
-    const subtitles = [
-      "Siap untuk petualangan hari ini?",
-      "Ayo jelajahi Bandung dengan sepeda!",
-      "Perjalanan hijau dimulai dari sini",
-      "Setiap kilometer berarti untuk bumi",
-      "Mari bersepeda dan sehat bersama"
-    ];
+    const subtitles = ["Siap untuk petualangan hari ini?", "Ayo jelajahi Bandung dengan sepeda!", "Perjalanan hijau dimulai dari sini", "Setiap kilometer berarti untuk bumi", "Mari bersepeda dan sehat bersama"];
 
     const hour = new Date().getHours();
     return subtitles[hour % subtitles.length];
@@ -209,7 +235,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.headerTextContainer}>
             <ThemedText style={styles.headerText}>
-              {getGreeting()}, {userData?.name || user?.displayName || "Cyclist"}!
+              {getGreeting()}, {userData?.name || user?.displayName || user?.email?.split("@")[0] || "Cyclist"}!
             </ThemedText>
             <ThemedText style={styles.headerSubtitle}>{getMotivationalSubtitle()}</ThemedText>
           </View>

@@ -2,9 +2,10 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import { auth } from "../config/firebase.mock";
+import { auth } from "../config/firebase";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -26,8 +27,8 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      // Mock Firebase Authentication login
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      // Firebase Web SDK Authentication login
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       console.log("User signed in!", user.email);

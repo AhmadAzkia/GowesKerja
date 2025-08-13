@@ -2,9 +2,11 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import { auth, database } from "../config/firebase.mock";
+import { auth, firestore } from "../config/firebase";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
@@ -40,11 +42,11 @@ export default function RegisterScreen() {
 
     try {
       // Mock Firebase Authentication registration
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       // Update user profile with name
-      await user.updateProfile({
+      await updateProfile(user, {
         displayName: name,
       });
 
@@ -64,8 +66,8 @@ export default function RegisterScreen() {
         uid: user.uid,
       };
 
-      // Save to Firebase Realtime Database
-      await database().ref(`users/${user.uid}`).set(userData);
+      // Save to Firestore
+      await setDoc(doc(firestore, "users", user.uid), userData);
 
       console.log("User registered successfully!", user.email);
       Alert.alert("Sukses", "Pendaftaran berhasil! Silakan login dengan akun Anda.", [

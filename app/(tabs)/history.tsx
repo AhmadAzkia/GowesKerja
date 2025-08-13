@@ -1,9 +1,10 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
+import { onAuthStateChanged, User } from "firebase/auth";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
-import { auth } from "../../config/firebase.mock";
+import { auth } from "../../config/firebase";
 import { MockDataService, TripData } from "../../services/mockDataService";
 
 export default function HistoryScreen() {
@@ -12,7 +13,7 @@ export default function HistoryScreen() {
   const [user, setUser] = useState<any | null>(null);
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser: User | null) => {
       setUser(currentUser);
     });
     return unsubscribe;

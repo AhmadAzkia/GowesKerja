@@ -5,7 +5,8 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import "react-native-reanimated";
 // import "../global.css";
-import { auth } from "../config/firebase.mock";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "../config/firebase";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 
@@ -21,7 +22,7 @@ export default function RootLayout() {
   const segments = useSegments();
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser: User | null) => {
       console.log("_layout auth state changed:", currentUser ? `User: ${currentUser.email}` : "No user");
       setUser(currentUser);
       setLoading(false);

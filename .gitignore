@@ -48,6 +48,12 @@ app-example
 
 # VS Code
 .vscode/settings.json
+
+# Firebase & Sensitive Config Files
+google-services.json
+config/firebase.ts
+*.config.js.local
+*.env.production
 .vscode/launch.json
 .vscode/tasks.json
 .vscode/.ropeproject

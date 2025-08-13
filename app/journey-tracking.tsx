@@ -7,7 +7,8 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 // Import new Maps component with real Google Maps support
 import MapViewComponent from "@/components/MapViewExpo";
-import { auth } from "../config/firebase.mock";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "../config/firebase";
 import { MockDataService } from "../services/mockDataService";
 
 interface LocationCoords {
@@ -31,7 +32,7 @@ export default function JourneyTrackingScreen() {
   const [isTracking, setIsTracking] = useState(false);
   const [locationWatcher, setLocationWatcher] = useState<Location.LocationSubscription | null>(null);
   const [user, setUser] = useState<any>(null);
-  const [timer, setTimer] = useState<number | null>(null);
+  const [timer, setTimer] = useState<ReturnType<typeof setInterval> | null>(null);
 
   // Extract param values to avoid object reference changes
   const startLat = params.startLat as string;
@@ -41,7 +42,7 @@ export default function JourneyTrackingScreen() {
 
   useEffect(() => {
     // Get user
-    const unsubscribe = auth().onAuthStateChanged((currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser: User | null) => {
       setUser(currentUser);
     });
 
