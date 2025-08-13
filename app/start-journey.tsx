@@ -5,7 +5,8 @@ import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
+// Import new Maps component with real Google Maps support
+import MapViewComponent from "@/components/MapViewExpo";
 
 interface Destination {
   name: string;
@@ -205,20 +206,35 @@ export default function StartJourneyScreen() {
 
         {/* Map */}
         <View style={styles.mapContainer}>
-          <MapView provider={PROVIDER_DEFAULT} style={styles.map} region={mapRegion} showsUserLocation={true} showsMyLocationButton={false}>
-            {currentLocation && <Marker coordinate={currentLocation} title="Lokasi Saat Ini" pinColor="green" />}
-            {destination && (
-              <Marker
-                coordinate={{
-                  latitude: destination.latitude,
-                  longitude: destination.longitude,
-                }}
-                title={destination.name}
-                description={destination.address}
-                pinColor="red"
-              />
-            )}
-          </MapView>
+          <MapViewComponent
+            latitude={mapRegion.latitude}
+            longitude={mapRegion.longitude}
+            showUserLocation={true}
+            style={styles.map}
+            markers={[
+              ...(currentLocation
+                ? [
+                    {
+                      id: "current",
+                      latitude: currentLocation.latitude,
+                      longitude: currentLocation.longitude,
+                      title: "Lokasi Saat Ini",
+                    },
+                  ]
+                : []),
+              ...(destination
+                ? [
+                    {
+                      id: "destination",
+                      latitude: destination.latitude,
+                      longitude: destination.longitude,
+                      title: destination.name,
+                      description: destination.address,
+                    },
+                  ]
+                : []),
+            ]}
+          />
         </View>
 
         {/* Journey Info */}

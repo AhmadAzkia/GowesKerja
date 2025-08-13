@@ -87,13 +87,13 @@ export default function RegisterScreen() {
       let errorMessage = "Pendaftaran gagal. Silakan coba lagi.";
 
       // Handle specific Firebase Auth errors
-      if (error.code === "auth/email-already-in-use") {
+      if (error.message === "auth/email-already-in-use") {
         errorMessage = "Email ini sudah digunakan oleh akun lain.";
-      } else if (error.code === "auth/invalid-email") {
+      } else if (error.message === "auth/invalid-email") {
         errorMessage = "Format email tidak valid.";
-      } else if (error.code === "auth/weak-password") {
+      } else if (error.message === "auth/weak-password") {
         errorMessage = "Password terlalu lemah. Gunakan kombinasi huruf, angka, dan simbol.";
-      } else if (error.code === "auth/operation-not-allowed") {
+      } else if (error.message === "auth/operation-not-allowed") {
         errorMessage = "Pendaftaran dengan email/password tidak diizinkan.";
       }
 
@@ -221,6 +221,8 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 32,
+    width: "100%",
+    paddingHorizontal: 20,
   },
   iconContainer: {
     width: 80,
@@ -232,15 +234,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#1f2937",
     marginBottom: 8,
+    textAlign: "center",
+    width: "100%",
+    flexShrink: 0,
   },
   subtitle: {
     fontSize: 16,
     color: "#6b7280",
     textAlign: "center",
+    width: "100%",
+    flexShrink: 0,
+    paddingHorizontal: 16,
   },
   form: {
     marginBottom: 32,

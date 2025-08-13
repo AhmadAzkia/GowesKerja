@@ -5,7 +5,8 @@ import * as Location from "expo-location";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from "react-native";
-import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from "react-native-maps";
+// Import new Maps component with real Google Maps support
+import MapViewComponent from "@/components/MapViewExpo";
 import { auth } from "../config/firebase.mock";
 import { MockDataService } from "../services/mockDataService";
 
@@ -251,16 +252,37 @@ export default function JourneyTrackingScreen() {
   return (
     <ThemedView style={styles.container}>
       {/* Map */}
-      <MapView provider={PROVIDER_DEFAULT} style={styles.map} region={mapRegion} showsUserLocation={true} showsMyLocationButton={false} followsUserLocation={true}>
-        {/* Start marker */}
-        <Marker coordinate={journeyData.startLocation} title="Start" pinColor="green" />
-
-        {/* Destination marker */}
-        <Marker coordinate={journeyData.destination} title={(params.destName as string) || "Destination"} description={params.destAddress as string} pinColor="red" />
-
-        {/* Route polyline */}
-        {journeyData.route.length > 1 && <Polyline coordinates={journeyData.route} strokeColor="#007AFF" strokeWidth={4} geodesic={true} />}
-      </MapView>
+      <MapViewComponent
+        latitude={mapRegion.latitude}
+        longitude={mapRegion.longitude}
+        showUserLocation={true}
+        style={styles.map}
+        markers={[
+          {
+            id: "start",
+            latitude: journeyData.startLocation.latitude,
+            longitude: journeyData.startLocation.longitude,
+            title: "Start",
+          },
+          {
+            id: "destination",
+            latitude: journeyData.destination.latitude,
+            longitude: journeyData.destination.longitude,
+            title: (params.destName as string) || "Destination",
+            description: params.destAddress as string,
+          },
+          ...(journeyData.currentLocation
+            ? [
+                {
+                  id: "current",
+                  latitude: journeyData.currentLocation.latitude,
+                  longitude: journeyData.currentLocation.longitude,
+                  title: "Current Location",
+                },
+              ]
+            : []),
+        ]}
+      />
 
       {/* Journey Info Overlay */}
       <View style={styles.overlay}>

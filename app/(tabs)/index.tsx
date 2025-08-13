@@ -1,4 +1,5 @@
-// import MapViewComponent from "@/components/MapView";
+// Import Maps component
+import MapViewComponent from "@/components/MapViewExpo";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
@@ -127,13 +128,41 @@ export default function HomeScreen() {
     }
   }, [user]);
 
-  // Helper untuk greeting berdasarkan waktu
+  // Greeting yang universal dan menarik
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Selamat Pagi";
-    if (hour < 15) return "Selamat Siang";
-    if (hour < 18) return "Selamat Sore";
-    return "Selamat Malam";
+    const day = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+    // Array greeting yang bervariasi
+    const morningGreetings = ["Selamat Pagi", "Pagi yang Cerah", "Halo"];
+    const afternoonGreetings = ["Selamat Siang", "Siang yang Produktif", "Hai"];
+    const eveningGreetings = ["Selamat Sore", "Sore yang Indah", "Halo"];
+    const nightGreetings = ["Selamat Malam", "Malam yang Tenang", "Halo"];
+    const lateNightGreetings = ["Halo", "Selamat Datang", "Hai"];
+
+    let greetings;
+    if (hour >= 5 && hour < 11) greetings = morningGreetings;
+    else if (hour >= 11 && hour < 15) greetings = afternoonGreetings;
+    else if (hour >= 15 && hour < 18) greetings = eveningGreetings;
+    else if (hour >= 18 && hour < 22) greetings = nightGreetings;
+    else greetings = lateNightGreetings;
+
+    // Pilih greeting berdasarkan hari untuk konsistensi
+    return greetings[day % greetings.length];
+  };
+
+  // Subtitle motivasi yang berubah-ubah
+  const getMotivationalSubtitle = () => {
+    const subtitles = [
+      "Siap untuk petualangan hari ini?",
+      "Ayo jelajahi Bandung dengan sepeda!",
+      "Perjalanan hijau dimulai dari sini",
+      "Setiap kilometer berarti untuk bumi",
+      "Mari bersepeda dan sehat bersama"
+    ];
+
+    const hour = new Date().getHours();
+    return subtitles[hour % subtitles.length];
   };
 
   // Jika masih loading, tampilkan loading
@@ -178,9 +207,12 @@ export default function HomeScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <ThemedText style={styles.headerText}>
-            {getGreeting()}, {userData?.name || user?.displayName || "User"}!
-          </ThemedText>
+          <View style={styles.headerTextContainer}>
+            <ThemedText style={styles.headerText}>
+              {getGreeting()}, {userData?.name || user?.displayName || "Cyclist"}!
+            </ThemedText>
+            <ThemedText style={styles.headerSubtitle}>{getMotivationalSubtitle()}</ThemedText>
+          </View>
           <FontAwesome name="bell" size={24} color="#007AFF" />
         </View>
 
@@ -215,14 +247,37 @@ export default function HomeScreen() {
 
         {/* Map Section */}
         <View style={styles.mapSection}>
-          <ThemedText style={styles.sectionTitle}>Peta Bandung</ThemedText>
+          <ThemedText style={styles.sectionTitle}>Maps</ThemedText>
           <View style={styles.mapContainer}>
-            <View style={styles.mapPlaceholder}>
-              <FontAwesome name="map" size={48} color="#3b82f6" />
-              <ThemedText style={styles.mapPlaceholderTitle}>Google Maps - Bandung</ThemedText>
-              <ThemedText style={styles.mapPlaceholderSubtitle}>Maps sedang dikonfigurasi</ThemedText>
-              <ThemedText style={styles.mapPlaceholderNote}>Lokasi: Gedung Sate, Dago, Trans Studio</ThemedText>
-            </View>
+            <MapViewComponent
+              style={styles.map}
+              latitude={-6.9175}
+              longitude={107.6191}
+              markers={[
+                {
+                  id: "gedung-sate",
+                  latitude: -6.9024,
+                  longitude: 107.6186,
+                  title: "Gedung Sate",
+                  description: "Landmark terkenal Bandung",
+                },
+                {
+                  id: "dago",
+                  latitude: -6.8795,
+                  longitude: 107.6107,
+                  title: "Dago",
+                  description: "Area wisata kuliner",
+                },
+                {
+                  id: "trans-studio",
+                  latitude: -6.9447,
+                  longitude: 107.635,
+                  title: "Trans Studio",
+                  description: "Theme park indoor terbesar",
+                },
+              ]}
+              showUserLocation={true}
+            />
           </View>
         </View>
 
@@ -266,6 +321,15 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 18,
     fontWeight: "600",
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+    fontStyle: "italic",
   },
   cardsContainer: {
     flexDirection: "row",

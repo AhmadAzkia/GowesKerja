@@ -1,8 +1,139 @@
-# Google Maps Setup Instructions
+# 🗺️ Google Maps Setup Guide - UPDATED
 
-## Setup Google Maps API
+## API Keys yang Perlu Dienable di Google Cloud Console
 
-### 1. Get Google Maps API Key
+### 1. **Maps SDK for Android**
+
+- ✅ Sudah dienable
+- Digunakan untuk: Menampilkan peta di aplikasi Android
+
+### 2. **Maps SDK for iOS**
+
+- ✅ Sudah dienable
+- Digunakan untuk: Menampilkan peta di aplikasi iOS
+
+### 3. **🔥 API Tambahan yang SANGAT DIREKOMENDASIKAN:**
+
+#### **Places API**
+
+- **Fungsi**: Pencarian tempat, autocomplete destinasi
+- **Benefit**: User bisa search "Gedung Sate", "Kampus UNIKOM", dll
+- **Cost**: $17 per 1000 requests (ada free tier)
+
+#### **Directions API**
+
+- **Fungsi**: Menghitung rute optimal dari A ke B
+- **Benefit**: Rute yang akurat, estimasi waktu tempuh
+- **Cost**: $5 per 1000 requests
+
+#### **Distance Matrix API**
+
+- **Fungsi**: Menghitung jarak antar titik
+- **Benefit**: Estimasi jarak yang lebih akurat
+- **Cost**: $5 per 1000 requests
+
+#### **Geocoding API**
+
+- **Fungsi**: Convert alamat ke koordinat (dan sebaliknya)
+- **Benefit**: User bisa input alamat text
+- **Cost**: $5 per 1000 requests
+
+## 🚀 Setup Steps
+
+### Step 1: Enable APIs
+
+1. Buka [Google Cloud Console](https://console.cloud.google.com/)
+2. Pilih project yang sama dengan Firebase
+3. Navigation Menu → APIs & Services → Library
+4. Search dan enable:
+   - ✅ Maps SDK for Android (sudah)
+   - ✅ Maps SDK for iOS (sudah)
+   - 🔥 Places API (recommended)
+   - 🔥 Directions API (recommended)
+   - Distance Matrix API (optional)
+   - Geocoding API (optional)
+
+### Step 2: Create API Keys
+
+1. APIs & Services → Credentials
+2. Create Credentials → API Key
+3. Copy API key yang dihasilkan
+
+### Step 3: Secure API Keys
+
+1. Edit API key yang dibuat
+2. Application restrictions:
+   - **Android**: Add package name `com.ahmadazkia.goweskerja`
+   - **iOS**: Add bundle identifier
+3. API restrictions: Pilih APIs yang dibutuhkan saja
+
+### Step 4: Update Application
+
+1. Replace `YOUR_GOOGLE_MAPS_API_KEY` di `android/app/src/main/AndroidManifest.xml`
+2. Untuk iOS, tambahkan ke `ios/GowesKerja/Info.plist`:
+   ```xml
+   <key>GMSApiKey</key>
+   <string>YOUR_API_KEY_HERE</string>
+   ```
+
+## 💰 Cost Estimation (Monthly)
+
+Asumsi: 100 user aktif, 5 trip per user per bulan = 500 trips
+
+- **Maps Display**: FREE (sampai quota tinggi)
+- **Places API**: 500 searches × $0.017 = $8.5
+- **Directions API**: 500 routes × $0.005 = $2.5
+- **Total**: ~$11/month
+
+**Google gives $200 free credits per month**, jadi kemungkinan besar GRATIS!
+
+## 🎯 Rekomendasi Prioritas
+
+### **Must Have (Sekarang)**
+
+1. ✅ Maps SDK Android/iOS - Sudah ada
+2. 🔥 **Places API** - Untuk search destinasi yang proper
+
+### **Nice to Have (Nanti)**
+
+1. Directions API - Untuk rute yang lebih akurat
+2. Geocoding API - Untuk input alamat text
+3. Distance Matrix API - Untuk kalkulasi jarak yang presisi
+
+## 🛠️ Implementation Notes
+
+Setelah enable Places API, kita bisa ganti mock search di `start-journey.tsx` dengan real Google Places search:
+
+```typescript
+// Ganti yang ini (mock):
+const mockResults: Destination[] = [...]
+
+// Dengan ini (real):
+const response = await fetch(
+  `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&location=${lat},${lng}&radius=50000&key=${API_KEY}`
+);
+```
+
+## 🔒 Security Best Practices
+
+1. **Never commit API keys** ke Git
+2. Gunakan **environment variables**
+3. Set **API restrictions** yang ketat
+4. Monitor usage di Google Cloud Console
+5. Set **billing alerts**
+
+## 📱 Testing
+
+Setelah setup:
+
+1. Test maps display ✅
+2. Test location permission ✅
+3. Test Places search (setelah enable)
+4. Test pada device fisik (emulator kadang bermasalah)
+
+---
+
+**Next Action**: Enable Places API untuk fitur search destinasi yang lebih baik! 🎯
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing project

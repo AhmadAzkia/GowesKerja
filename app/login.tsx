@@ -40,7 +40,22 @@ export default function LoginScreen() {
       console.log("Waiting for auth state to propagate...");
     } catch (error: any) {
       console.error("Login error:", error);
-      Alert.alert("Error", "Login gagal, periksa email atau password Anda.");
+      let errorMessage = "Login gagal, periksa email atau password Anda.";
+
+      // Handle specific Firebase Auth errors
+      if (error.message === "auth/user-not-found") {
+        errorMessage = "Akun dengan email ini tidak ditemukan. Silakan daftar terlebih dahulu.";
+      } else if (error.message === "auth/wrong-password") {
+        errorMessage = "Password yang Anda masukkan salah.";
+      } else if (error.message === "auth/invalid-email") {
+        errorMessage = "Format email tidak valid.";
+      } else if (error.message === "auth/user-disabled") {
+        errorMessage = "Akun Anda telah dinonaktifkan.";
+      } else if (error.message === "auth/too-many-requests") {
+        errorMessage = "Terlalu banyak percobaan login. Coba lagi nanti.";
+      }
+
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -112,11 +127,6 @@ export default function LoginScreen() {
               <ThemedText style={styles.loginButtonText}>Masuk</ThemedText>
             )}
           </TouchableOpacity>
-
-          {/* Forgot Password */}
-          <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotButton}>
-            <ThemedText style={styles.forgotText}>Lupa password?</ThemedText>
-          </TouchableOpacity>
         </View>
 
         {/* Footer */}
@@ -150,6 +160,8 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 32,
+    width: "100%",
+    paddingHorizontal: 20,
   },
   iconContainer: {
     width: 80,
@@ -161,15 +173,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#1f2937",
     marginBottom: 8,
+    textAlign: "center",
+    width: "100%",
+    flexShrink: 0,
   },
   subtitle: {
     fontSize: 16,
     color: "#6b7280",
     textAlign: "center",
+    width: "100%",
+    flexShrink: 0,
+    paddingHorizontal: 16,
   },
   form: {
     marginBottom: 32,
