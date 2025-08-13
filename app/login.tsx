@@ -61,26 +61,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      Alert.alert("Error", "Mohon masukkan email Anda terlebih dahulu.");
-      return;
-    }
-
-    if (!email.includes("@")) {
-      Alert.alert("Error", "Format email tidak valid.");
-      return;
-    }
-
-    try {
-      await auth().sendPasswordResetEmail(email);
-      Alert.alert("Email Terkirim", "Link reset password telah dikirim ke email Anda.");
-    } catch (error: any) {
-      console.error("Password reset error:", error);
-      Alert.alert("Error", "Gagal mengirim email reset password.");
-    }
-  };
-
   return (
     <ThemedView style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
