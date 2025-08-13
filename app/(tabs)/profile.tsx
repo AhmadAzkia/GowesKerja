@@ -1,7 +1,6 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FontAwesome } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import React, { useCallback, useEffect, useState } from "react";
@@ -31,30 +30,6 @@ export default function ProfileScreen() {
     return unsubscribe;
   }, []);
 
-  const updateProfileStats = useCallback(
-    async (currentProfileData: ProfileData) => {
-      try {
-        // Use MockDataService to calculate stats untuk user ini saja
-        const stats = await MockDataService.calculateUserStats(user?.uid);
-
-        const updatedData: ProfileData = {
-          ...currentProfileData,
-          totalTrips: stats.totalTrips,
-          totalDistance: `${stats.totalDistance.toFixed(1)} km`,
-          co2Saved: `${stats.co2Saved.toFixed(1)} kg`,
-          points: stats.points,
-        };
-
-        setProfileData(updatedData);
-        await AsyncStorage.setItem("userData", JSON.stringify(updatedData));
-      } catch (error) {
-        console.error("Error updating profile stats:", error);
-        setProfileData(currentProfileData);
-      }
-    },
-    [user]
-  );
-
   const loadProfileData = useCallback(async () => {
     if (!user) {
       setLoading(false);
@@ -62,37 +37,26 @@ export default function ProfileScreen() {
     }
 
     try {
-      const storedData = await AsyncStorage.getItem("userData");
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        // Update nama dan email dengan data user yang sebenarnya
-        const updatedData = {
-          ...parsedData,
-          name: user.displayName || parsedData.name || "User",
-          email: user.email || parsedData.email || "user@example.com",
-        };
-        // Update statistik berdasarkan trip history untuk user ini
-        await updateProfileStats(updatedData);
-      } else {
-        // Default profile data berdasarkan user yang login
-        const defaultData: ProfileData = {
-          name: user.displayName || "User",
-          email: user.email || "user@example.com",
-          joinDate: new Date().toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          }),
-          totalTrips: 0,
-          totalDistance: "0 km",
-          co2Saved: "0 kg",
-          points: 0,
-        };
-        setProfileData(defaultData);
-        await AsyncStorage.setItem("userData", JSON.stringify(defaultData));
-      }
+      // Get user data from Firebase instead of AsyncStorage
+      const stats = await MockDataService.calculateUserStats(user?.uid);
+
+      // Ensure stats are valid numbers/strings before using
+      const userData: ProfileData = {
+        name: user.displayName || "User",
+        email: user.email || "user@example.com",
+        joinDate: new Date().toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+        totalTrips: typeof stats.totalTrips === "number" ? stats.totalTrips : 0,
+        totalDistance: typeof stats.totalDistance === "string" ? stats.totalDistance : "0 km",
+        co2Saved: typeof stats.co2Saved === "string" ? stats.co2Saved : "0 kg",
+        points: typeof stats.totalPoints === "number" ? stats.totalPoints : 0,
+      };
+      setProfileData(userData);
     } catch (error) {
-      console.error("Error loading profile data:", error);
+      console.error("Error updating profile stats:", error);
       // Fallback data dengan info user yang login
       setProfileData({
         name: user?.displayName || "User",
@@ -106,7 +70,7 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  }, [user, updateProfileStats]);
+  }, [user]);
 
   useEffect(() => {
     loadProfileData();
@@ -120,38 +84,13 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            // Sign out from Firebase auth (mock)
+            // Sign out from Firebase auth
             await signOut(auth);
-            // Remove local user data
-            await AsyncStorage.removeItem("userData");
             // Navigate to login - the _layout.tsx will handle automatic routing
             router.replace("/login");
           } catch (error) {
             console.error("Logout error:", error);
             Alert.alert("Error", "Gagal logout");
-          }
-        },
-      },
-    ]);
-  };
-
-  // Temporary function for clearing all data (untuk testing)
-  const handleClearAllData = async () => {
-    Alert.alert("Clear All Data", "Ini akan menghapus semua data trip history dan leaderboard. Yakin?", [
-      { text: "Batal", style: "cancel" },
-      {
-        text: "Hapus",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await MockDataService.clearAllData();
-            await AsyncStorage.clear();
-            Alert.alert("Sukses", "Semua data telah dihapus.");
-            // Reload data
-            loadProfileData();
-          } catch (error) {
-            console.error("Error clearing data:", error);
-            Alert.alert("Error", "Gagal menghapus data.");
           }
         },
       },
@@ -322,13 +261,6 @@ export default function ProfileScreen() {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.clearDataButton} onPress={handleClearAllData}>
-          <View style={styles.clearDataButtonContent}>
-            <FontAwesome name="trash" size={20} color="white" />
-            <ThemedText style={styles.clearDataButtonText}>Clear All Data (Testing)</ThemedText>
-          </View>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <View style={styles.logoutButtonContent}>
             <FontAwesome name="sign-out" size={20} color="white" />
@@ -468,23 +400,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#1f2937",
     marginLeft: 12,
-  },
-  clearDataButton: {
-    backgroundColor: "#f59e0b",
-    borderRadius: 16,
-    padding: 16,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  clearDataButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  clearDataButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
   },
   logoutButton: {
     backgroundColor: "#ef4444",

@@ -47,6 +47,7 @@ GowesKerja adalah aplikasi mobile yang membantu pengendara sepeda di Bandung unt
    ```
 
 3. **Setup Firebase**
+
    - Buat project Firebase baru di [Firebase Console](https://console.firebase.google.com)
    - Enable Authentication (Email/Password)
    - Enable Firestore Database
@@ -124,9 +125,6 @@ Aplikasi ini dibuat sebagai project personal untuk membantu komunitas cycling Ba
 - [ ] **v1.4**: Offline mode untuk tracking
 - [ ] **v2.0**: iOS support
 
-## 📄 License
-
-Project ini dibuat untuk tujuan edukasi dan portfolio. Feel free to use sebagai referensi!
 
 ## 👨‍💻 About Developer
 

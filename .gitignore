@@ -9,10 +9,7 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
-android/
-ios/
-.kotlin/
+# Native builds (but keep source android/ folder for Expo managed workflow)
 *.orig.*
 *.jks
 *.p8
@@ -39,24 +36,33 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-app-example
+# Firebase & Sensitive Config Files (CRITICAL - DO NOT COMMIT)
+google-services.json
+config/firebase.ts
+firebase-adminsdk*.json
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+GoogleService-Info.plist
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Development files
 *.log
 *.tmp
 *.cache
+*.temp
+.tmp/
+.temp/
 
 # VS Code
 .vscode/settings.json
-
-# Firebase & Sensitive Config Files
-google-services.json
-config/firebase.ts
-*.config.js.local
-*.env.production
 .vscode/launch.json
 .vscode/tasks.json
-.vscode/.ropeproject
 
 # IDE
 .idea/
@@ -68,30 +74,11 @@ config/firebase.ts
 Thumbs.db
 ehthumbs.db
 
-# Firebase config (keep template, ignore actual config)
-google-services.json
-GoogleService-Info.plist
-firebase-adminsdk*.json
-.firebaserc
-firebase-debug.log
-firebase-debug.*.log
-
-# Environment variables
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Temporary files
-*.tmp
-*.temp
-.tmp/
-.temp/
-
 # Backup files
 *.bak
 *.backup
 *.old
+*_backup*
 
 # Test coverage
 coverage/
@@ -121,18 +108,6 @@ pids
 # EAS
 .easignore
 
-# Project specific - disabled files and backups
-*.disabled
-*.backup
-postcss.config.js.disabled
-
-# Development config files (keep template versions)
-config/firebase.mock.ts
-config/maps.config.ts
-google-services.json
-app.json
-
 # Debug files
-android.view.Choreographer$CallbackRecord
 *.stacktrace
 *.crash

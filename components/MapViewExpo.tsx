@@ -25,7 +25,8 @@ export default function MapViewComponent({
   showUserLocation = true,
   style,
 }: MapViewComponentProps) {
-  // If we have valid coordinates, use real maps
+  // Real Google Maps implementation - API key configured
+
   if (latitude && longitude) {
     const initialRegion = {
       latitude,
@@ -41,7 +42,7 @@ export default function MapViewComponent({
             style={styles.map}
             initialRegion={initialRegion}
             showsUserLocation={showUserLocation}
-            showsMyLocationButton={false}
+            showsMyLocationButton={true}
             mapType="standard"
             zoomEnabled={true}
             scrollEnabled={true}
@@ -69,44 +70,26 @@ export default function MapViewComponent({
       );
     } catch (error) {
       console.log("MapView error, falling back to placeholder:", error);
+      // Fallback to placeholder if Maps still have issues
+      return (
+        <View style={[styles.fallbackContainer, style]}>
+          <View style={styles.fallbackContent}>
+            <FontAwesome name="map" size={48} color="#FF6B6B" />
+            <Text style={styles.fallbackTitle}>Map Error</Text>
+            <Text style={styles.fallbackSubtitle}>Terjadi error saat memuat maps. Periksa koneksi internet dan API key.</Text>
+          </View>
+        </View>
+      );
     }
   }
 
-  // Fallback for development or when maps are not available
+  // Fallback for invalid coordinates
   return (
     <View style={[styles.fallbackContainer, style]}>
       <View style={styles.fallbackContent}>
-        <FontAwesome name="map" size={48} color="#007AFF" />
-        <Text style={styles.fallbackTitle}>{latitude && longitude ? "Maps Loading..." : "Waiting for Location..."}</Text>
-        <Text style={styles.fallbackSubtitle}>{latitude && longitude ? "Google Maps will appear here" : "Enable location to see maps"}</Text>
-
-        {latitude && longitude && (
-          <View style={styles.coordinatesContainer}>
-            <Text style={styles.coordinatesTitle}>Current Location:</Text>
-            <Text style={styles.coordinates}>Lat: {latitude.toFixed(4)}</Text>
-            <Text style={styles.coordinates}>Lng: {longitude.toFixed(4)}</Text>
-          </View>
-        )}
-
-        {showUserLocation && latitude && longitude && (
-          <View style={styles.userLocationIndicator}>
-            <FontAwesome name="location-arrow" size={16} color="#4CAF50" />
-            <Text style={styles.userLocationText}>Location Found</Text>
-          </View>
-        )}
-
-        {markers.length > 0 && (
-          <View style={styles.markersContainer}>
-            <Text style={styles.markersTitle}>Markers ({markers.length}):</Text>
-            {markers.slice(0, 3).map((marker, index) => (
-              <View key={marker.id} style={styles.markerItem}>
-                <FontAwesome name="map-pin" size={12} color="#F44336" />
-                <Text style={styles.markerText}>{marker.title}</Text>
-              </View>
-            ))}
-            {markers.length > 3 && <Text style={styles.moreMarkers}>...and {markers.length - 3} more</Text>}
-          </View>
-        )}
+        <FontAwesome name="location-arrow" size={48} color="#FFA500" />
+        <Text style={styles.fallbackTitle}>Menunggu Lokasi</Text>
+        <Text style={styles.fallbackSubtitle}>Mengaktifkan GPS untuk menampilkan peta...</Text>
       </View>
     </View>
   );

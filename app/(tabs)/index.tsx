@@ -28,6 +28,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [popularRoutes, setPopularRoutes] = useState<RouteData[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser: User | null) => {
@@ -47,9 +48,9 @@ export default function HomeScreen() {
         const updatedData: UserData = {
           ...currentUserData,
           totalTrips: stats.totalTrips,
-          totalDistance: `${stats.totalDistance.toFixed(1)} km`,
-          co2Saved: `${stats.co2Saved.toFixed(1)} kg`,
-          points: stats.points,
+          totalDistance: stats.totalDistance, // Already formatted as string
+          co2Saved: stats.co2Saved, // Already formatted as string
+          points: stats.totalPoints, // Use correct property name
         };
 
         setUserData(updatedData);
@@ -135,6 +136,7 @@ export default function HomeScreen() {
       setPopularRoutes(routes);
     } catch (error) {
       console.error("Error loading popular routes:", error);
+      setError("Failed to load routes");
     }
   }, [user]);
 
@@ -147,10 +149,22 @@ export default function HomeScreen() {
 
   // Initialize mock data on component mount (tanpa sample data untuk user baru)
   useEffect(() => {
-    MockDataService.initializeData(false); // false = tidak tambahkan sample data
-    // Debug: lihat apa yang ada di storage
-    MockDataService.debugStorage();
-    // Don't load popular routes here - wait for user to login
+    const initializeApp = async () => {
+      try {
+        // Clear old data to fix any corruption issues
+        console.log("🔄 Initializing fresh app data...");
+        await AsyncStorage.removeItem("popularRoutes"); // Remove old Jakarta data
+
+        MockDataService.initializeData(false); // false = tidak tambahkan sample data
+        // Debug: lihat apa yang ada di storage
+        MockDataService.debugStorage();
+        // Don't load popular routes here - wait for user to login
+      } catch (error) {
+        console.error("Error initializing app:", error);
+      }
+    };
+
+    initializeApp();
   }, []);
 
   // Initialize new user when user login for first time
@@ -273,7 +287,7 @@ export default function HomeScreen() {
 
         {/* Map Section */}
         <View style={styles.mapSection}>
-          <ThemedText style={styles.sectionTitle}>Maps</ThemedText>
+          <ThemedText style={styles.sectionTitle}>Peta Bandung</ThemedText>
           <View style={styles.mapContainer}>
             <MapViewComponent
               style={styles.map}
